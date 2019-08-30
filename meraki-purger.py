@@ -3,6 +3,8 @@ import json
 import requests
 import os
 
+API_EXEC_DELAY = 0.21  # Delay added to avoid hitting dashboard API max request rate
+
 def is_in_org(network_id, networks_json):
     for i in range(len(networks_json)):
         if network_id == networks_json[i]['id']:
@@ -183,6 +185,7 @@ def purge_networks(apikey, org_id):
                 r_d = requests.delete('https://api.meraki.com/api/v0/networks/' + networks_json[i]['id'],
                                       headers={"X-Cisco-Meraki-API-Key": apikey})
                 if r_d.ok:
+                     time.sleep(API_EXEC_DELAY)
                     continue
                 else:
                     print('\nError ' + str(r_d.status_code))
@@ -214,6 +217,7 @@ def purge_networks(apikey, org_id):
             delete_r = requests.delete('https://api.meraki.com/api/v0/networks/' + i,
                                        headers={"X-Cisco-Meraki-API-Key": apikey})
             if delete_r.ok:
+                time.sleep(API_EXEC_DELAY)
                 continue
 
             else:
