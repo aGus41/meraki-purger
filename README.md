@@ -1,7 +1,7 @@
 # meraki-purger.py
 
 ### Overview 
-Deletes every the networks in your organization. Lock the ones you don't want to delete
+Deletes every network in your organization. Lock the ones you don't want to delete
 
 ### How to run
 Python 3.6+ needed.
