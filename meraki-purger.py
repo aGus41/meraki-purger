@@ -186,7 +186,7 @@ def purge_networks(apikey, org_id):
                                       headers={"X-Cisco-Meraki-API-Key": apikey})
                 if r_d.ok:
                      time.sleep(API_EXEC_DELAY)
-                    continue
+                     continue
                 else:
                     print('\nError ' + str(r_d.status_code))
                     exit()
