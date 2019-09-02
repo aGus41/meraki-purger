@@ -160,16 +160,19 @@ def delete_network(apikey, org_id, network_id):
             print('\nDelete completed')
 
         else:
-            print('Error ' + str(delete.status_code))
+            print('\nError ' + str(delete.status_code))
             exit()
+        time.sleep(API_EXEC_DELAY)
         networks_json = create_json_networks(apikey, org_id)
-        if len(networks_json) > 0:
-            print('\nThe remaining networks are:')
-            for i in range(0, len(networks_json)):
-                print("\n{}, {}".format(networks_json[i]['id'],
-                                        networks_json[i]['name']))
-        else:
-            print('You have now 0 networks in your organization')
+
+        print('\n\nYou have now ' + str(len(networks_json)) + ' networks in your organization')
+        # if len(networks_json) > 0:
+        #     print('\nThe remaining networks are:')
+        #     for i in range(0, len(networks_json)):
+        #         print("\n{}, {}".format(networks_json[i]['id'],
+        #                                 networks_json[i]['name']))
+        # else:
+        #     print('You have now 0 networks in your organization')
     else:
         print('\nYou are trying to delete a locked network, unlock it first to delete it')
 
@@ -179,9 +182,9 @@ def purge_networks(apikey, org_id):
     try:
         locked_id_txt = reads_from_file_nodup(org_id)
     except FileNotFoundError:
-        y_n = input('No locked networks found. \nDo you want to delete all of them? (Y/N):')  # using -d purge with no locked networks
+        y_n = input('\nNo locked networks found. \n\nDo you want to delete all of them? (Y/N):').lower()  # using -d purge with no locked networks
 
-        if y_n == 'Y' or y_n == 'y' or y_n == 'yes' or y_n == 'YES':
+        if y_n == 'y' or y_n == 'yes':
             for i in range(len(networks_json)):
                 r_d = requests.delete('https://api.meraki.com/api/v0/networks/' + networks_json[i]['id'],
                                       headers={"X-Cisco-Meraki-API-Key": apikey})
@@ -193,8 +196,11 @@ def purge_networks(apikey, org_id):
                     exit()
             print('\nPurge completed')
             exit()
-        if y_n == 'N' or y_n == 'n' or y_n == 'no' or y_n == 'NO' or y_n == 'No' or y_n == 'nO':
+        if y_n == 'n' or y_n == 'no':
             print('\nPurge aborted')
+            exit()
+        else:
+            print('\nBad input')
             exit()
 
     locked_ids = list()
@@ -211,7 +217,7 @@ def purge_networks(apikey, org_id):
         network_ids.append(networks_json[i]['id'])
     networks_id_to_delete = list(set(network_ids) - set(locked_ids))
 
-    if len(networks_id_to_delete) == 0:  # if all networks all locked
+    if len(networks_id_to_delete) == 0:  # if all networks are locked
         print('\nNo networks to delete')
     else:
         for i in networks_id_to_delete:
@@ -239,25 +245,27 @@ def purge_networks(apikey, org_id):
 ###################
 
 
-parser = argparse.ArgumentParser(description='Purge your organization easily')
-
-required = parser.add_argument_group('required arguments')
-
-required.add_argument('-k', '--key', type=str, required=True, help='API Key')
-parser.add_argument('-o', '--org', metavar='', type=str, required=False, help='List networks in that organization')
-
-group = parser.add_mutually_exclusive_group()
-group.add_argument('-d', '--delete', metavar='', type=str, required=False,
-                   help='Network ID to delete. Type <purge> instead to delete every network that is not locked')
-
-group.add_argument('-l', '--lock', metavar='', type=str, required=False,
-                   help='Network ID to lock. Locks a network so it cannot be deleted. Type <show> instead to print your locked networks')
-group.add_argument('-u', '--unlock', metavar='', type=str, required=False,
-                   help='Network ID to unlock. Unlocks a network so it can be deleted')
-
-args = parser.parse_args()
 
 def main():
+
+
+    parser = argparse.ArgumentParser(description='Purge your organization easily')
+
+    required = parser.add_argument_group('required arguments')
+
+    required.add_argument('-k', '--key', type=str, required=True, help='API Key')
+    parser.add_argument('-o', '--org', metavar='', type=str, required=False, help='List networks in that organization')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-d', '--delete', metavar='', type=str, required=False,
+                       help='Network ID to delete. Type <purge> instead to delete every network that is not locked')
+
+    group.add_argument('-l', '--lock', metavar='', type=str, required=False,
+                       help='Network ID to lock. Locks a network so it cannot be deleted. Type <show> instead to print your locked networks')
+    group.add_argument('-u', '--unlock', metavar='', type=str, required=False,
+                       help='Network ID to unlock. Unlocks a network so it can be deleted')
+
+    args = parser.parse_args()
 
     if args.org is None:
 
@@ -270,7 +278,7 @@ def main():
                     create_json_orgs(args.key)
 
     elif args.delete is not None:
-        if args.delete == 'purge' or args.delete == 'PURGE':
+        if args.delete.lower() == 'purge':
             purge_networks(args.key, args.org)
         else:
             delete_network(args.key, args.org, args.delete)
@@ -310,3 +318,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
