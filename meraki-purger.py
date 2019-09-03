@@ -6,11 +6,13 @@ import time
 
 API_EXEC_DELAY = 0.21  # Delay added to avoid hitting dashboard API max request rate
 
+
 def is_in_org(network_id, networks_json):
     for i in range(len(networks_json)):
         if network_id == networks_json[i]['id']:
             return True
     return False
+
 
 def reads_from_file_nodup(org_id):
     list1 = []
@@ -19,6 +21,12 @@ def reads_from_file_nodup(org_id):
     # ensures that there's no duplicates in the text
     list1 = list(dict.fromkeys(list1))
     return list1
+
+
+def get_net_name_from_id(id, networks_json):
+    for i in networks_json:
+        if i['id'] == id:
+            return i['name']
 
 
 def create_json_orgs(apikey):
@@ -47,7 +55,7 @@ def create_json_networks(apikey, org_id):
         return networks_json
     else:
         print('\nError ' + str(networks.status_code))
-        exit() #I used exit() method here because the create_json_networks method is used by more methods
+        exit()  # I used exit() method here because the create_json_networks method is used by more methods
 
 
 def unlock_network(network_id, org_id):
@@ -96,7 +104,7 @@ def lock_network(apikey, org_id, network_id):
                 if net['id'] == network_id:
                     net_name = net['name']
 
-            print('\nNetwork <' + net_name + '> locked')
+            print("\nNetwork '" + net_name + "' locked")
         else:
             # doesnt create .txt if netID is not found
             print("\nNetwork ID not found in org " + org_id)
@@ -119,7 +127,7 @@ def lock_network(apikey, org_id, network_id):
                 if net['id'] == network_id:
                     net_name = net['name']
 
-            print('\nNetwork <' + net_name + '> locked')
+            print("\nNetwork '" + net_name + "' locked")
             exit()
     else:
         print('\nNetwork not found in org ' + org_id)
@@ -166,13 +174,6 @@ def delete_network(apikey, org_id, network_id):
         networks_json = create_json_networks(apikey, org_id)
 
         print('\n\nYou have now ' + str(len(networks_json)) + ' networks in your organization')
-        # if len(networks_json) > 0:
-        #     print('\nThe remaining networks are:')
-        #     for i in range(0, len(networks_json)):
-        #         print("\n{}, {}".format(networks_json[i]['id'],
-        #                                 networks_json[i]['name']))
-        # else:
-        #     print('You have now 0 networks in your organization')
     else:
         print('\nYou are trying to delete a locked network, unlock it first to delete it')
 
@@ -182,15 +183,17 @@ def purge_networks(apikey, org_id):
     try:
         locked_id_txt = reads_from_file_nodup(org_id)
     except FileNotFoundError:
-        y_n = input('\nNo locked networks found. \n\nDo you want to delete all of them? (Y/N):').lower()  # using -d purge with no locked networks
+        y_n = input(
+            '\nNo locked networks found. \n\nDo you want to delete all of them? (Y/N):').lower()  # using -d purge with no locked networks
 
         if y_n == 'y' or y_n == 'yes':
             for i in range(len(networks_json)):
                 r_d = requests.delete('https://api.meraki.com/api/v0/networks/' + networks_json[i]['id'],
                                       headers={"X-Cisco-Meraki-API-Key": apikey})
                 if r_d.ok:
-                     time.sleep(API_EXEC_DELAY)
-                     continue
+                    print("\n\n'" + networks_json[i]['name'] + "', " + networks_json[i]['id'] + " deleted successfully")
+                    time.sleep(API_EXEC_DELAY)
+                    continue
                 else:
                     print('\nError ' + str(r_d.status_code))
                     exit()
@@ -209,7 +212,8 @@ def purge_networks(apikey, org_id):
             if networks_json[i]['id'] == locked_id_txt[j]:  # checks that the locked ID that is in the .txt file is actually in the network
                 locked_ids.append(networks_json[i]['id'])
     print('\nYour locked networks are: \n')
-    print(*locked_ids, sep=", ")
+    for i in locked_ids:
+        print('\n' + i + ', ' + get_net_name_from_id(i, networks_json))
 
     # get the IDs of the network to delete
     network_ids = list()
@@ -218,17 +222,18 @@ def purge_networks(apikey, org_id):
     networks_id_to_delete = list(set(network_ids) - set(locked_ids))
 
     if len(networks_id_to_delete) == 0:  # if all networks are locked
-        print('\nNo networks to delete')
+        print('\n\nNo networks to delete')
     else:
         for i in networks_id_to_delete:
             delete_r = requests.delete('https://api.meraki.com/api/v0/networks/' + i,
                                        headers={"X-Cisco-Meraki-API-Key": apikey})
+
             if delete_r.ok:
+                print("\n\n" + i + ", " + "'" + get_net_name_from_id(i, networks_json) + "'" + " deleted successfully")
                 time.sleep(API_EXEC_DELAY)
                 continue
-
             else:
-                print('\nError '+ str(delete_r.status_code))
+                print('\nError ' + str(delete_r.status_code))
                 exit()
 
         print('\nPurge completed \n\nYou have deleted ' + str(len(networks_id_to_delete)) + ' networks')
@@ -245,10 +250,7 @@ def purge_networks(apikey, org_id):
 ###################
 
 
-
 def main():
-
-
     parser = argparse.ArgumentParser(description='Purge your organization easily')
 
     required = parser.add_argument_group('required arguments')
@@ -274,7 +276,6 @@ def main():
             if args.lock is None:
 
                 if args.unlock is None:
-
                     create_json_orgs(args.key)
 
     elif args.delete is not None:
@@ -299,12 +300,13 @@ def main():
         networks_json = create_json_networks(args.key, args.org)
 
         if len(networks_json) > 0:
-            print('\u001b[36m\nYou have {} networks in your organization, with the following IDs and names:'.format(len(networks_json)))
+            print('\u001b[36m\nYou have {} networks in your organization, with the following IDs and names:'.format(
+                len(networks_json)))
 
             for i in range(len(networks_json)):
                 if networks_json[i]['id'] in locked_ids:
                     print('\u001b[36;1m\n' + '{}, {}'.format(networks_json[i]['id'],
-                                                         networks_json[i]['name']) + ', LOCKED')
+                                                             networks_json[i]['name']) + ', LOCKED')
                 else:
                     print('\u001b[36;1m\n' + '{}, {}'.format(networks_json[i]['id'],
                                                              networks_json[i]['name']))
@@ -315,6 +317,7 @@ def main():
 
     if (args.delete is not None or args.lock is not None or args.unlock is not None) and args.org is None:
         print('\n -o org_id input needed')
+
 
 if __name__ == '__main__':
     main()
