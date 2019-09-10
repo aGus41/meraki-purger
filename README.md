@@ -9,7 +9,7 @@ The script uses the python ```requests``` module to make the calls to the Meraki
 Run ```pip install requests``` to install it.
 I used some color coding for the script output. 
 
-In Windows, it is likely that you have to enable it in the Registry Editor: 
+In Windows, it is likely that you have to enable it manually in the Registry Editor: 
 https://user-images.githubusercontent.com/5589855/36943005-11e41fe2-1f36-11e8-9401-7ac40d300f10.png
 
 ### --help output
