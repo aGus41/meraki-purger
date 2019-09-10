@@ -7,7 +7,9 @@ Deletes every network in your organization. Lock the ones you don't want to dele
 Python 3.6+ needed.
 The script uses the python ```requests``` module to make the calls to the Meraki Dashboard API. 
 Run ```pip install requests``` to install it.
-I used some color coding for the script output. In Windows, it is likely that you have to enable it in the Registry Editor: 
+I used some color coding for the script output. 
+
+In Windows, it is likely that you have to enable it in the Registry Editor: 
 https://user-images.githubusercontent.com/5589855/36943005-11e41fe2-1f36-11e8-9401-7ac40d300f10.png
 
 ### --help output
